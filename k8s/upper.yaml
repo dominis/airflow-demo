@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ems-upper
+  labels:
+    app: ems-upper
+spec:
+  template:
+    spec:
+      activeDeadlineSeconds: 100
+      automountServiceAccountToken: false
+      initContainers:
+        - name: init
+          image: dominis/ems-demo:latest
+          imagePullPolicy: Always
+          env:
+            - name: MODE
+              value: init
+          envFrom:
+            - configMapRef:
+                name: ems-demo
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: upper
+          image: dominis/ems-demo:latest
+          imagePullPolicy: Always
+          env:
+            - name: MODE
+              value: t-upper
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: upload
+          image: dominis/ems-demo:latest
+          imagePullPolicy: Always
+          env:
+            - name: MODE
+              value: upload
+          envFrom:
+            - configMapRef:
+                name: ems-demo
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      restartPolicy: Never
+      volumes:
+        - name: data
+          emptyDir: {}
